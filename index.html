@@ -346,7 +346,29 @@
     transition: color .15s, border-color .15s;
   }
   #clear-btn:hover { color: var(--text); border-color: var(--text); }
+  #open-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 0 16px;
+  height: 32px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s;
+}
 
+#open-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+#open-btn svg { stroke: currentColor; }
   #output {
     flex: 1;
     overflow-y: auto;
@@ -410,6 +432,13 @@
   </svg>
   SAVE
 </button>
+<button id="open-btn" title="Open Python file">
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+  </svg>
+  OPEN
+</button>
+<input type="file" id="file-input" accept=".py" style="display: none;">
 </div>
 
 <div id="app">
@@ -772,6 +801,41 @@ function downloadCurrentFile() {
 }
 
 downloadBtn.addEventListener('click', downloadCurrentFile);
+const openBtn = document.getElementById('open-btn');
+const fileInput = document.getElementById('file-input');
+
+// When user clicks the "OPEN" button, trigger the hidden file input
+openBtn.addEventListener('click', () => fileInput.click());
+
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  
+  // This runs once the file is finished being read
+  reader.onload = (event) => {
+    const content = event.target.result;
+    
+    // Create a new file object for our state
+    const newFileData = {
+      id: nextId++,
+      name: file.name,
+      code: content
+    };
+
+    files.push(newFileData);
+    createEditor(newFileData);
+    activateTab(newFileData.id);
+    
+    appendOutput(`\n📂 Loaded: ${file.name}\n`, 'info');
+    
+    // Reset the input so you can upload the same file again if needed
+    fileInput.value = '';
+  };
+
+  reader.readAsText(file);
+});
 </script>
 </body>
 </html>
