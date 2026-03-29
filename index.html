@@ -100,7 +100,6 @@
 <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
 
 <script type="module">
-    // --- 1. IMPORT COLLAB & CM6 MODULES ---
     import * as Y from 'https://esm.sh/yjs';
     import { WebrtcProvider } from 'https://esm.sh/y-webrtc';
     import { yCollab } from 'https://esm.sh/y-codemirror.next';
@@ -109,89 +108,68 @@
     import { python } from 'https://esm.sh/@codemirror/lang-python';
     import { oneDark } from 'https://esm.sh/@codemirror/theme-one-dark';
 
-    // --- 2. SETUP YJS COLLABORATION ---
-    // Use a unique room name. Everyone with this name will sync.
-    const roomName = 'hmhs-cs-sandbox-v1'; 
+    // 1. Setup Yjs
     const ydoc = new Y.Doc();
+    
+    // 2. Connect to WebRTC
+    // Use a VERY specific room name to avoid collisions with other users on the web
+    const roomName = 'hmhs-sandbox-unique-v101'; 
+    
     const provider = new WebrtcProvider(roomName, ydoc, {
-        signaling: ['wss://signaling.yjs.dev']
+        // We use multiple public signaling servers in case one is down
+        signaling: [
+            'wss://signaling.yjs.dev', 
+            'wss://y-webrtc-signaling-eu.herokuapp.com',
+            'wss://y-webrtc-signaling-us.herokuapp.com'
+        ]
     });
+
+    // DEBUG: Check connection in the Console (F12)
+    provider.on('status', event => {
+        console.log('WebRTC Status:', event.status); // Should say "connected"
+    });
+
+    provider.on('peers', event => {
+        console.log('New Peers in room:', event.webrtcPeers);
+        if(event.webrtcPeers.length > 0) {
+            console.log("✅ COLLABORATION ACTIVE: Someone else is here!");
+        }
+    });
+
     const ytext = ydoc.getText('codemirror');
 
-    // --- 3. INITIALIZE EDITOR ---
+    // 3. Editor Setup
     const view = new EditorView({
         state: EditorState.create({
             doc: ytext.toString(),
             extensions: [
                 basicSetup,
                 python(),
-                oneDark, // Dark theme for CM6
+                oneDark,
                 yCollab(ytext, provider.awareness)
             ]
         }),
         parent: document.getElementById('editor-wrap')
     });
 
-    // Handle initial load of text from Yjs
-    ytext.observe(e => {
-        // This ensures the editor updates if someone else was already in the room
-    });
-
-    // --- 4. PYODIDE LOGIC ---
-    let pyodide = null;
-    const outputEl = document.getElementById('output');
-
-    function appendOutput(text, type='out') {
-        const span = document.createElement('div');
-        span.className = type === 'err' ? 'err-line' : (type === 'ok' ? 'ok-line' : 'out-line');
-        if (type === 'prompt') span.className = 'prompt';
-        span.textContent = text;
-        outputEl.appendChild(span);
-        outputEl.scrollTop = outputEl.scrollHeight;
-    }
-
-    async function initPyodide() {
-        try {
-            pyodide = await loadPyodide({
-                stdout: (s) => appendOutput(s),
-                stderr: (s) => appendOutput(s, 'err'),
-            });
-            document.getElementById('status-dot').className = 'ready';
-            document.getElementById('status-text').textContent = 'Python Ready';
-            document.getElementById('run-btn').disabled = false;
-        } catch(e) {
-            appendOutput('Pyodide Load Failed: ' + e, 'err');
-        }
-    }
-
-    async function runCode() {
-        if (!pyodide) return;
+    // 4. Pyodide Link
+    window.runCode = async () => {
+        if (!window.pyodide) return;
+        const outputEl = document.getElementById('output');
         outputEl.innerHTML = '';
-        appendOutput('▶ Running...', 'prompt');
         
-        // Grab current code from the collaborative editor
         const code = view.state.doc.toString();
-        
         try {
-            await pyodide.runPythonAsync(code);
-            appendOutput('✓ Execution Complete', 'ok');
+            await window.pyodide.runPythonAsync(code);
         } catch (err) {
-            appendOutput(err.message, 'err');
+            const span = document.createElement('div');
+            span.className = 'err-line';
+            span.textContent = err.message;
+            outputEl.appendChild(span);
         }
-    }
-
-    // Attach to buttons
-    document.getElementById('run-btn').onclick = runCode;
-    document.getElementById('download-btn').onclick = () => {
-        const code = view.state.doc.toString();
-        const blob = new Blob([code], { type: 'text/plain' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'sandbox_collab.py';
-        a.click();
     };
 
-    initPyodide();
+    document.getElementById('run-btn').onclick = window.runCode;
 </script>
 
 </body>
