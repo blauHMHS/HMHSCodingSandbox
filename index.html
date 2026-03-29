@@ -113,7 +113,7 @@
     
     // 2. Connect to WebRTC
     // Use a VERY specific room name to avoid collisions with other users on the web
-    const roomName = 'hmhs-sandbox-unique-v101'; 
+    const roomName = window.location.hash || 'hmhs-main-room';
     
     const provider = new WebrtcProvider(roomName, ydoc, {
         // We use multiple public signaling servers in case one is down
