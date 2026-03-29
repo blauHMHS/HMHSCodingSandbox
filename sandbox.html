@@ -86,51 +86,47 @@
   #status-dot.error   { background: var(--danger); }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 
-  #run-btn {
+  /* ── BUTTON STYLES ── */
+  .btn-base {
     display: flex;
     align-items: center;
     gap: 7px;
-    background: var(--accent);
-    color: #0d0f12;
-    border: none;
     border-radius: 5px;
     padding: 0 16px;
     height: 32px;
     font-family: 'JetBrains Mono', monospace;
     font-size: .8rem;
     font-weight: 700;
-    letter-spacing: .06em;
     cursor: pointer;
-    transition: opacity .15s, transform .1s;
+    transition: all .15s;
+    border: 1px solid var(--border);
+  }
+
+  #run-btn {
+    background: var(--accent);
+    color: #0d0f12;
+    border: none;
+    letter-spacing: .06em;
   }
   #run-btn:hover { opacity: .88; }
   #run-btn:active { transform: scale(.97); }
   #run-btn:disabled { opacity: .35; cursor: not-allowed; }
   #run-btn svg { width:13px; height:13px; fill:#0d0f12; }
   
-  #download-btn {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  background: var(--surface);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  padding: 0 16px;
-  height: 32px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: .8rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all .15s;
+  #download-btn, #open-btn {
+    background: var(--surface);
+    color: var(--text);
   }
+  #download-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+  #open-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-#download-btn:hover {
-  border-color: var(--accent2);
-  color: var(--accent2);
-}
+  #reset-btn {
+    background: transparent;
+    color: var(--muted);
+    border-color: var(--border);
+  }
+  #reset-btn:hover { color: var(--danger); border-color: var(--danger); }
 
-#download-btn svg { stroke: currentColor; }
   #theme-btn {
     background: transparent;
     border: 1px solid var(--border);
@@ -140,7 +136,7 @@
     font-size: .9rem;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    transition: color .15s, border-color .15s;
+    transition: all .15s;
     flex-shrink: 0;
   }
   #theme-btn:hover { color: var(--accent); border-color: var(--accent); }
@@ -271,19 +267,6 @@
   .CodeMirror-gutters { background: var(--bg) !important; border-right: 1px solid var(--border) !important; }
   .CodeMirror-linenumber { color: var(--muted) !important; padding: 0 10px 0 6px; }
 
-  /* Light theme CodeMirror overrides */
-  :root.light .CodeMirror { background: var(--bg) !important; color: #383830 !important; }
-  :root.light .CodeMirror-gutters { background: var(--surface) !important; }
-  :root.light .cm-keyword   { color: #a626a4 !important; }
-  :root.light .cm-def       { color: #4078f2 !important; }
-  :root.light .cm-string    { color: #50a14f !important; }
-  :root.light .cm-number    { color: #986801 !important; }
-  :root.light .cm-comment   { color: #9d9d97 !important; font-style: italic; }
-  :root.light .cm-builtin   { color: #c18401 !important; }
-  :root.light .cm-operator  { color: #383830 !important; }
-  :root.light .CodeMirror-cursor { border-left-color: #383830 !important; }
-  :root.light .CodeMirror-selected { background: #d0d0c8 !important; }
-
   /* ── DIVIDER ── */
   #divider {
     width: 5px;
@@ -356,17 +339,12 @@
     white-space: pre-wrap;
     word-break: break-word;
   }
-  #output::-webkit-scrollbar { width: 4px; }
-  #output::-webkit-scrollbar-track { background: transparent; }
-  #output::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
   #output .out-line { color: var(--text); }
   #output .err-line { color: var(--danger); }
   #output .info-line { color: var(--muted); font-style: italic; }
   #output .ok-line { color: var(--accent2); }
   #output .prompt { color: var(--accent); }
 
-  /* ── SHORTCUTS HINT ── */
   #hints {
     padding: 6px 14px;
     background: var(--surface);
@@ -389,7 +367,6 @@
 </head>
 <body>
 
-<!-- TOP BAR -->
 <div id="topbar">
   <div id="logo">HMHS<span>/</span>Sandbox</div>
   <div class="spacer"></div>
@@ -397,28 +374,34 @@
     <div id="status-dot" class="loading"></div>
     <span id="status-text">Loading runtime…</span>
   </div>
+  
   <button id="theme-btn" title="Toggle light/dark theme">🌙</button>
-  <button id="run-btn" disabled>
+  
+  <button id="reset-btn" class="btn-base" title="Reset workspace to default">RESET</button>
+  
+  <button id="open-btn" class="btn-base" title="Open Python file">
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+    OPEN
+  </button>
+
+  <button id="download-btn" class="btn-base" title="Download current file">
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+    SAVE
+  </button>
+
+  <button id="run-btn" class="btn-base" disabled>
     <svg viewBox="0 0 16 16"><polygon points="3,1 13,8 3,15"/></svg>
     RUN
   </button>
-  <button id="download-btn" title="Download current file">
-  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-    <polyline points="7 10 12 15 17 10"></polyline>
-    <line x1="12" y1="15" x2="12" y2="3"></line>
-  </svg>
-  SAVE
-</button>
+  
+  <input type="file" id="file-input" accept=".py" style="display: none;">
 </div>
 
 <div id="app">
-  <!-- TAB BAR -->
   <div id="tabbar">
     <button id="add-tab-btn" title="New file">+</button>
   </div>
 
-  <!-- SPLIT -->
   <div id="split">
     <div id="editor-wrap"></div>
     <div id="divider"></div>
@@ -430,51 +413,24 @@
       <div id="output"></div>
       <div id="hints">
         <span class="hint"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> Run</span>
-        <span class="hint"><kbd>Ctrl</kbd>+<kbd>/</kbd> Comment</span>
         <span class="hint">Double-click tab to rename</span>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Pyodide -->
 <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
 <script>
 // ── STATE ──────────────────────────────────────────────────────────────────
 const DEFAULTS = [
-  { name: 'main.py', code: `# Welcome to HMHS Sandbox 🐍
-# Write Python and hit Run (Ctrl+Enter)
-
-def greet(name):
-    return f"Hello, {name}!"
-
-print(greet("World"))
-
-for i in range(5):
-    print(f"  {i+1}. counting…")
-` },
-  { name: 'math_utils.py', code: `# A little math playground
-
-import math
-
-def circle_area(r):
-    return math.pi * r ** 2
-
-def is_prime(n):
-    if n < 2: return False
-    for i in range(2, int(math.sqrt(n)) + 1):
-        if n % i == 0: return False
-    return True
-
-primes = [n for n in range(2, 30) if is_prime(n)]
-print("Primes < 30:", primes)
-print(f"Area of circle r=5: {circle_area(5):.4f}")
-` }
+  { name: 'main.py', code: `# Welcome to HMHS Sandbox 🐍\n# Write Python and hit Run (Ctrl+Enter)\n\ndef greet(name):\n    return f"Hi, {name}!"\n\nprint(greet("World"))\n\nfor i in range(5):\n    print(f"  {i+1}. counting…")\n` },
+  { name: 'math_utils.py', code: `# A little math playground\n\nimport math\n\ndef circle_area(r):\n    return math.pi * r ** 2\n\ndef is_prime(n):\n    if n < 2: return False\n    for i in range(2, int(math.sqrt(n)) + 1):\n        if n % i == 0: return False\n    return True\n\nprimes = [n for n in range(2, 30) if is_prime(n)]\nprint("Primes < 30:", primes)\nprint(f"Area of circle r=5: {circle_area(5):.4f}")\n` }
 ];
 
-let files = DEFAULTS.map((f, i) => ({ id: i, name: f.name, code: f.code }));
-let nextId = files.length;
-let activeId = files[0].id;
+let savedData = localStorage.getItem('hmhs_sandbox_files');
+let files = savedData ? JSON.parse(savedData) : DEFAULTS.map((f, i) => ({ id: i, name: f.name, code: f.code }));
+let nextId = files.length > 0 ? Math.max(...files.map(f => f.id)) + 1 : 0;
+let activeId = files.length > 0 ? files[0].id : null;
 let editors = {};
 let pyodide = null;
 
@@ -484,9 +440,40 @@ const addTabBtn   = document.getElementById('add-tab-btn');
 const editorWrap  = document.getElementById('editor-wrap');
 const outputEl    = document.getElementById('output');
 const runBtn      = document.getElementById('run-btn');
-const clearBtn    = document.getElementById('clear-btn');
-const statusDot   = document.getElementById('status-dot');
-const statusText  = document.getElementById('status-text');
+const resetBtn    = document.getElementById('reset-btn');
+const themeBtn    = document.getElementById('theme-btn');
+
+// ── PERSISTENCE ────────────────────────────────────────────────────────────
+function autoSave() {
+  const dataToSave = files.map(f => ({
+    id: f.id,
+    name: f.name,
+    code: editors[f.id] ? editors[f.id].getValue() : f.code
+  }));
+  localStorage.setItem('hmhs_sandbox_files', JSON.stringify(dataToSave));
+}
+
+// Exit Warning
+window.addEventListener('beforeunload', (e) => {
+  const hasContent = files.some(f => {
+    const code = editors[f.id] ? editors[f.id].getValue() : f.code;
+    return code.trim().length > 0;
+  });
+  if (hasContent) {
+    e.preventDefault();
+    e.returnValue = ''; 
+  }
+});
+
+// Reset Logic
+resetBtn.addEventListener('click', () => {
+  if (confirm("Are you sure? This will delete all your local files and reset the sandbox to defaults.")) {
+    // We remove the listener so the browser doesn't ask "Leave site?" when we reload
+    window.onbeforeunload = null; 
+    localStorage.removeItem('hmhs_sandbox_files');
+    location.reload();
+  }
+});
 
 // ── PYODIDE ───────────────────────────────────────────────────────────────
 (async () => {
@@ -495,17 +482,16 @@ const statusText  = document.getElementById('status-text');
       stdout: (s) => appendOutput(s + '\n', 'out'),
       stderr: (s) => appendOutput(s + '\n', 'err'),
     });
-    statusDot.className = 'ready';
-    statusText.textContent = 'Python 3.11 ready';
+    document.getElementById('status-dot').className = 'ready';
+    document.getElementById('status-text').textContent = 'Python 3.11 ready';
     runBtn.disabled = false;
   } catch(e) {
-    statusDot.className = 'error';
-    statusText.textContent = 'Runtime error';
+    document.getElementById('status-dot').className = 'error';
+    document.getElementById('status-text').textContent = 'Runtime error';
     appendOutput('Failed to load Pyodide: ' + e, 'err');
   }
 })();
 
-// ── OUTPUT ────────────────────────────────────────────────────────────────
 function appendOutput(text, type='out') {
   const cls = { out:'out-line', err:'err-line', info:'info-line', ok:'ok-line', prompt:'prompt' }[type] || 'out-line';
   const span = document.createElement('span');
@@ -515,17 +501,14 @@ function appendOutput(text, type='out') {
   outputEl.scrollTop = outputEl.scrollHeight;
 }
 
-function clearOutput() { outputEl.innerHTML = ''; }
-
-// ── RUN ───────────────────────────────────────────────────────────────────
 async function runCode() {
   if (!pyodide || runBtn.disabled) return;
   const file = files.find(f => f.id === activeId);
   if (!file) return;
 
   if (editors[activeId]) file.code = editors[activeId].getValue();
-
-  clearOutput();
+  autoSave();
+  outputEl.innerHTML = '';
   appendOutput(`▶ Running ${file.name}…\n`, 'prompt');
   runBtn.disabled = true;
 
@@ -540,25 +523,19 @@ async function runCode() {
 }
 
 runBtn.addEventListener('click', runCode);
-clearBtn.addEventListener('click', clearOutput);
+document.getElementById('clear-btn').addEventListener('click', () => outputEl.innerHTML = '');
 
 // ── THEME ─────────────────────────────────────────────────────────────────
-const themeBtn = document.getElementById('theme-btn');
 let isLight = false;
-
-function applyTheme() {
+themeBtn.addEventListener('click', () => {
+  isLight = !isLight;
   document.documentElement.classList.toggle('light', isLight);
   themeBtn.textContent = isLight ? '🌑' : '🌙';
   const cmTheme = isLight ? 'default' : 'dracula';
   Object.values(editors).forEach(cm => cm.setOption('theme', cmTheme));
-}
-
-themeBtn.addEventListener('click', () => {
-  isLight = !isLight;
-  applyTheme();
 });
 
-// ── EDITOR ────────────────────────────────────────────────────────────────
+// ── EDITOR & TABS ──────────────────────────────────────────────────────────
 function createEditor(file) {
   const wrap = document.createElement('div');
   wrap.className = 'cm-wrap';
@@ -569,209 +546,119 @@ function createEditor(file) {
   const cm = CodeMirror(wrap, {
     value: file.code,
     mode: 'python',
-    theme: isLight ? 'default' : 'dracula',
+    theme: 'dracula',
     lineNumbers: true,
     autoCloseBrackets: true,
     matchBrackets: true,
     keyMap: 'sublime',
     indentUnit: 4,
     tabSize: 4,
-    indentWithTabs: false,
-    extraKeys: {
-      'Ctrl-Enter': runCode,
-      'Cmd-Enter': runCode,
-      'Tab': cm => cm.execCommand('insertSoftTab')
-    }
+    extraKeys: { 'Ctrl-Enter': runCode, 'Cmd-Enter': runCode }
   });
 
+  cm.on('change', () => autoSave());
   editors[file.id] = cm;
   return wrap;
 }
 
-// ── TABS ──────────────────────────────────────────────────────────────────
 function renderTabs() {
   [...tabbar.querySelectorAll('.tab')].forEach(t => t.remove());
-
   files.forEach(file => {
     const tab = document.createElement('div');
     tab.className = 'tab' + (file.id === activeId ? ' active' : '');
-    tab.dataset.fileId = file.id;
+    tab.innerHTML = `<span class="py-icon">.py</span><span class="tab-name">${file.name}</span>`;
+    
+    if (files.length > 1) {
+      const closeEl = document.createElement('span');
+      closeEl.className = 'close-tab';
+      closeEl.textContent = '×';
+      closeEl.onclick = (e) => { e.stopPropagation(); closeTab(file.id); };
+      tab.appendChild(closeEl);
+    }
 
-    const icon = document.createElement('span');
-    icon.className = 'py-icon';
-    icon.textContent = '.py';
-
-    const nameEl = document.createElement('span');
-    nameEl.className = 'tab-name';
-    nameEl.textContent = file.name;
-
-    const closeEl = document.createElement('span');
-    closeEl.className = 'close-tab';
-    closeEl.title = 'Close tab';
-    closeEl.textContent = '×';
-
-    tab.appendChild(icon);
-    tab.appendChild(nameEl);
-    if (files.length > 1) tab.appendChild(closeEl);
-
-    let clickTimer = null;
-    tab.addEventListener('click', (e) => {
-      if (e.target === closeEl) return;
-      // Use a small delay so dblclick can cancel the single-click
-      clickTimer = setTimeout(() => activateTab(file.id), 200);
-    });
-
-    tab.addEventListener('dblclick', (e) => {
-      if (e.target === closeEl) return;
-      clearTimeout(clickTimer); // cancel the single-click activation
-      // Already active — just open the rename input
-      activateTab(file.id);
-
+    tab.onclick = () => activateTab(file.id);
+    
+    tab.ondblclick = () => {
+      const nameEl = tab.querySelector('.tab-name');
       const input = document.createElement('input');
-      input.type = 'text';
       input.className = 'tab-name-input';
-      input.value = file.name.replace(/\.py$/, '');
+      input.value = file.name.replace('.py','');
       nameEl.replaceWith(input);
       input.focus();
-      input.select();
-
-      function commitRename() {
-        let newName = input.value.trim();
-        if (!newName) newName = file.name.replace(/\.py$/, '');
-        newName = newName.replace(/\.py$/, '') + '.py';
-        file.name = newName;
-        nameEl.textContent = newName;
-        input.replaceWith(nameEl);
-      }
-      input.addEventListener('blur', commitRename);
-      input.addEventListener('keydown', (ke) => {
-        if (ke.key === 'Enter')  { ke.preventDefault(); input.blur(); }
-        if (ke.key === 'Escape') { input.value = file.name.replace(/\.py$/, ''); input.blur(); }
-      });
-    });
-
-    closeEl.addEventListener('click', (e) => {
-      e.stopPropagation();
-      closeTab(file.id);
-    });
+      input.onblur = () => {
+        file.name = (input.value.trim() || 'script') + '.py';
+        renderTabs();
+        autoSave();
+      };
+    };
 
     tabbar.insertBefore(tab, addTabBtn);
   });
 }
 
 function activateTab(id) {
-  const cur = files.find(f => f.id === activeId);
-  if (cur && editors[cur.id]) cur.code = editors[cur.id].getValue();
-
+  if (activeId !== null && editors[activeId]) files.find(f => f.id === activeId).code = editors[activeId].getValue();
   activeId = id;
-
-  editorWrap.querySelectorAll('.cm-wrap').forEach(w => {
-    w.style.display = (parseInt(w.dataset.fileId) === id) ? 'block' : 'none';
-  });
-
-  if (editors[id]) {
-    editors[id].refresh();
-    editors[id].focus();
-  }
-
+  editorWrap.querySelectorAll('.cm-wrap').forEach(w => w.style.display = (parseInt(w.dataset.fileId) === id) ? 'block' : 'none');
+  if (editors[id]) { editors[id].refresh(); editors[id].focus(); }
   renderTabs();
 }
 
 function addTab() {
-  const newName = prompt("Enter file name:", `script_${nextId}.py`);
-  if (!newName) return; // Cancel if user hits cancel
-
-  const file = { 
-    id: nextId++, 
-    name: newName.endsWith('.py') ? newName : newName + '.py', 
-    code: `# New file\n` 
-  };
-  
+  const name = prompt("File name:", `script_${nextId}.py`);
+  if (!name) return;
+  const file = { id: nextId++, name: name.endsWith('.py') ? name : name + '.py', code: '# New file\n' };
   files.push(file);
   createEditor(file);
   activateTab(file.id);
 }
 
 function closeTab(id) {
-  if (files.length === 1) return;
   const idx = files.findIndex(f => f.id === id);
   files.splice(idx, 1);
-  const wrap = editorWrap.querySelector(`[data-file-id="${id}"]`);
-  if (wrap) wrap.remove();
+  editorWrap.querySelector(`[data-file-id="${id}"]`).remove();
   delete editors[id];
-  const newActive = files[Math.min(idx, files.length - 1)].id;
-  activateTab(newActive);
+  activateTab(files[Math.min(idx, files.length - 1)].id);
 }
 
-addTabBtn.addEventListener('click', addTab);
+addTabBtn.onclick = addTab;
 
 // ── DIVIDER DRAG ──────────────────────────────────────────────────────────
-const divider     = document.getElementById('divider');
-const outputPanel = document.getElementById('output-panel');
-const splitEl     = document.getElementById('split');
-
-let dragging = false, startX = 0, startW = 0;
-
-divider.addEventListener('mousedown', e => {
-  dragging = true;
-  startX = e.clientX;
-  startW = outputPanel.offsetWidth;
-  divider.classList.add('dragging');
-  document.body.style.cursor = 'col-resize';
-  document.body.style.userSelect = 'none';
-});
-
-window.addEventListener('mousemove', e => {
+let dragging = false;
+document.getElementById('divider').onmousedown = () => dragging = true;
+window.onmousemove = (e) => {
   if (!dragging) return;
-  const delta = startX - e.clientX;
-  const newW = Math.max(180, Math.min(startW + delta, splitEl.offsetWidth * 0.7));
-  outputPanel.style.width = newW + 'px';
-});
-
-window.addEventListener('mouseup', () => {
-  if (!dragging) return;
-  dragging = false;
-  divider.classList.remove('dragging');
-  document.body.style.cursor = '';
-  document.body.style.userSelect = '';
-  if (editors[activeId]) editors[activeId].refresh();
-});
+  const newW = Math.max(180, window.innerWidth - e.clientX);
+  document.getElementById('output-panel').style.width = newW + 'px';
+};
+window.onmouseup = () => { dragging = false; if (editors[activeId]) editors[activeId].refresh(); };
 
 // ── INIT ──────────────────────────────────────────────────────────────────
 files.forEach(f => createEditor(f));
-activateTab(activeId);
-renderTabs();
-// ── DOWNLOAD LOGIC ────────────────────────────────────────────────────────
-const downloadBtn = document.getElementById('download-btn');
+if (activeId !== null) activateTab(activeId);
 
-function downloadCurrentFile() {
+// ── DOWNLOAD & OPEN ───────────────────────────────────────────────────────
+document.getElementById('download-btn').onclick = () => {
   const file = files.find(f => f.id === activeId);
-  if (!file) return;
+  const blob = new Blob([editors[activeId].getValue()], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = file.name;
+  a.click();
+};
 
-  // 1. Get the latest code from the editor
-  const content = editors[activeId] ? editors[activeId].getValue() : file.code;
-  
-  // 2. Create a "Blob" (Binary Large Object) of the text
-  const blob = new Blob([content], { type: 'text/plain' });
-  
-  // 3. Create a temporary link element
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  
-  // 4. Set the filename and trigger the download
-  link.href = url;
-  link.download = file.name; // Uses the tab's name (e.g., main.py)
-  document.body.appendChild(link);
-  link.click();
-  
-  // 5. Cleanup
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-  
-  appendOutput(`\n💾 Saved ${file.name} to your device.\n`, 'info');
-}
-
-downloadBtn.addEventListener('click', downloadCurrentFile);
+document.getElementById('open-btn').onclick = () => document.getElementById('file-input').click();
+document.getElementById('file-input').onchange = (e) => {
+  const file = e.target.files[0];
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const f = { id: nextId++, name: file.name, code: ev.target.result };
+    files.push(f);
+    createEditor(f);
+    activateTab(f.id);
+  };
+  reader.readAsText(file);
+};
 </script>
 </body>
 </html>
