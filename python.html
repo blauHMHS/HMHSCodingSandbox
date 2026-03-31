@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HMHS Python Sandbox</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/comment/comment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/keymap/sublime.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;700;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0d0f12;
+    --surface:   #13161b;
+    --panel:     #181c22;
+    --border:    #252a33;
+    --accent:    #f7c948;
+    --accent2:   #4df0a0;
+    --danger:    #f75c5c;
+    --text:      #d4d8e0;
+    --muted:     #5a6070;
+    --tab-h:     42px;
+    --toolbar-h: 52px;
+  }
+
+  :root.light {
+    --bg:      #f5f5f0;
+    --surface: #eaeae4;
+    --panel:   #e0e0d8;
+    --border:  #c8c8be;
+    --accent:  #d4a000;
+    --accent2: #1a9e60;
+    --danger:  #d63030;
+    --text:    #1a1a1a;
+    --muted:   #7a7a70;
+  }
+
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; overflow: hidden; }
+
+  /* ── TOP BAR ── */
+  #topbar {
+    height: var(--toolbar-h);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+    gap: 14px;
+    user-select: none;
+  }
+  #logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.15rem;
+    letter-spacing: -.02em;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  #logo span { color: var(--text); opacity: .5; }
+  .spacer { flex: 1; }
+  #pyodide-status {
+    font-size: .7rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  #status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: background .4s;
+  }
+  #status-dot.loading { background: var(--accent); animation: pulse 1s infinite; }
+  #status-dot.ready   { background: var(--accent2); }
+  #status-dot.error   { background: var(--danger); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  /* ── BUTTON STYLES ── */
+  .btn-base {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    border-radius: 5px;
+    padding: 0 16px;
+    height: 32px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .15s;
+    border: 1px solid var(--border);
+  }
+
+  #run-btn {
+    background: var(--accent);
+    color: #0d0f12;
+    border: none;
+    letter-spacing: .06em;
+  }
+  #run-btn:hover { opacity: .88; }
+  #run-btn:active { transform: scale(.97); }
+  #run-btn:disabled { opacity: .35; cursor: not-allowed; }
+  #run-btn svg { width:13px; height:13px; fill:#0d0f12; }
+  
+  #download-btn, #open-btn {
+    background: var(--surface);
+    color: var(--text);
+  }
+  #download-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+  #open-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  #reset-btn {
+    background: transparent;
+    color: var(--muted);
+    border-color: var(--border);
+  }
+  #reset-btn:hover { color: var(--danger); border-color: var(--danger); }
+
+  #theme-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 5px;
+    width: 32px; height: 32px;
+    font-size: .9rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s;
+    flex-shrink: 0;
+  }
+  #theme-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ── TAB RENAME INPUT ── */
+  .tab-name-input {
+    background: var(--bg);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .75rem;
+    padding: 1px 5px;
+    width: 100px;
+    outline: none;
+  }
+
+  /* ── LAYOUT ── */
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - var(--toolbar-h));
+  }
+
+  /* ── TAB BAR ── */
+  #tabbar {
+    height: var(--tab-h);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-end;
+    padding: 0 10px;
+    gap: 2px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-shrink: 0;
+  }
+  #tabbar::-webkit-scrollbar { height: 3px; }
+  #tabbar::-webkit-scrollbar-track { background: transparent; }
+  #tabbar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px;
+    height: 34px;
+    border-radius: 5px 5px 0 0;
+    border: 1px solid transparent;
+    border-bottom: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .75rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color .15s, background .15s;
+    position: relative;
+    top: 1px;
+  }
+  .tab:hover { color: var(--text); background: var(--panel); }
+  .tab.active {
+    background: var(--bg);
+    border-color: var(--border);
+    color: var(--accent);
+  }
+  .tab .py-icon { color: var(--accent2); font-size: .6rem; opacity: .7; }
+  .tab .close-tab {
+    opacity: 0;
+    width: 14px; height: 14px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 3px;
+    transition: opacity .15s, background .15s;
+    font-size: .7rem;
+  }
+  .tab:hover .close-tab { opacity: 1; }
+  .tab .close-tab:hover { background: var(--danger); color: #fff; }
+
+  .tab .tab-name { outline: none; background: transparent; border: none; color: inherit; font: inherit; width: auto; min-width: 10px; max-width: 140px; }
+
+  #add-tab-btn {
+    margin-left: 4px;
+    width: 28px; height: 28px;
+    border-radius: 5px;
+    border: 1px dashed var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    align-self: center;
+    transition: color .15s, border-color .15s;
+    flex-shrink: 0;
+  }
+  #add-tab-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ── MAIN SPLIT ── */
+  #split {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  #editor-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    min-width: 0;
+  }
+
+  .cm-wrap {
+    flex: 1;
+    overflow: hidden;
+    height: 100%;
+  }
+
+  /* CodeMirror overrides */
+  .CodeMirror {
+    height: 100% !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 14px !important;
+    line-height: 1.7 !important;
+    background: var(--bg) !important;
+  }
+  .CodeMirror-scroll { padding-bottom: 40px; }
+  .CodeMirror-gutters { background: var(--bg) !important; border-right: 1px solid var(--border) !important; }
+  .CodeMirror-linenumber { color: var(--muted) !important; padding: 0 10px 0 6px; }
+
+  /* ── DIVIDER ── */
+  #divider {
+    width: 5px;
+    background: var(--border);
+    cursor: col-resize;
+    flex-shrink: 0;
+    transition: background .15s;
+    position: relative;
+  }
+  #divider::after {
+    content: '⋮';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    color: var(--muted);
+    font-size: .7rem;
+    pointer-events: none;
+  }
+  #divider:hover, #divider.dragging { background: var(--accent); }
+
+  /* ── OUTPUT PANEL ── */
+  #output-panel {
+    width: 38%;
+    min-width: 180px;
+    max-width: 70%;
+    background: var(--panel);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  #output-header {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    border-bottom: 1px solid var(--border);
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  #output-label {
+    font-size: .65rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 700;
+  }
+  #clear-btn {
+    margin-left: auto;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .65rem;
+    cursor: pointer;
+    letter-spacing: .06em;
+    transition: color .15s, border-color .15s;
+  }
+  #clear-btn:hover { color: var(--text); border-color: var(--text); }
+
+  #output {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 16px;
+    font-size: .8rem;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  #output .out-line { color: var(--text); }
+  #output .err-line { color: var(--danger); }
+  #output .info-line { color: var(--muted); font-style: italic; }
+  #output .ok-line { color: var(--accent2); }
+  #output .prompt { color: var(--accent); }
+
+  #hints {
+    padding: 6px 14px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+  }
+  .hint { font-size: .6rem; color: var(--muted); }
+  .hint kbd {
+    background: var(--border);
+    color: var(--text);
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .6rem;
+  }
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div id="logo">HMHS<span>/</span>Sandbox</div>
+  <div class="spacer"></div>
+  <div id="pyodide-status">
+    <div id="status-dot" class="loading"></div>
+    <span id="status-text">Loading runtime…</span>
+  </div>
+  
+  <button id="theme-btn" title="Toggle light/dark theme">🌙</button>
+  
+  <button id="reset-btn" class="btn-base" title="Reset workspace to default">RESET</button>
+  
+  <button id="open-btn" class="btn-base" title="Open Python file">
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+    OPEN
+  </button>
+
+  <button id="download-btn" class="btn-base" title="Download current file">
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+    SAVE
+  </button>
+
+  <button id="run-btn" class="btn-base" disabled>
+    <svg viewBox="0 0 16 16"><polygon points="3,1 13,8 3,15"/></svg>
+    RUN
+  </button>
+  
+  <input type="file" id="file-input" accept=".py" style="display: none;">
+</div>
+
+<div id="app">
+  <div id="tabbar">
+    <button id="add-tab-btn" title="New file">+</button>
+  </div>
+
+  <div id="split">
+    <div id="editor-wrap"></div>
+    <div id="divider"></div>
+    <div id="output-panel">
+      <div id="output-header">
+        <span id="output-label">Output</span>
+        <button id="clear-btn">CLEAR</button>
+      </div>
+      <div id="output"></div>
+      <div id="hints">
+        <span class="hint"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> Run</span>
+        <span class="hint">Double-click tab to rename</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────────
+const DEFAULTS = [
+  { name: 'main.py', code: `# Welcome to HMHS Sandbox 🐍\n# Write Python and hit Run (Ctrl+Enter)\n\ndef greet(name):\n    return f"Hi, {name}!"\n\nprint(greet("World"))\n\nfor i in range(5):\n    print(f"  {i+1}. counting…")\n` },
+  { name: 'math_utils.py', code: `# A little math playground\n\nimport math\n\ndef circle_area(r):\n    return math.pi * r ** 2\n\ndef is_prime(n):\n    if n < 2: return False\n    for i in range(2, int(math.sqrt(n)) + 1):\n        if n % i == 0: return False\n    return True\n\nprimes = [n for n in range(2, 30) if is_prime(n)]\nprint("Primes < 30:", primes)\nprint(f"Area of circle r=5: {circle_area(5):.4f}")\n` }
+];
+
+let savedData = localStorage.getItem('hmhs_sandbox_files');
+let files = savedData ? JSON.parse(savedData) : DEFAULTS.map((f, i) => ({ id: i, name: f.name, code: f.code }));
+let nextId = files.length > 0 ? Math.max(...files.map(f => f.id)) + 1 : 0;
+let activeId = files.length > 0 ? files[0].id : null;
+let editors = {};
+let pyodide = null;
+
+// ── DOM REFS ───────────────────────────────────────────────────────────────
+const tabbar      = document.getElementById('tabbar');
+const addTabBtn   = document.getElementById('add-tab-btn');
+const editorWrap  = document.getElementById('editor-wrap');
+const outputEl    = document.getElementById('output');
+const runBtn      = document.getElementById('run-btn');
+const resetBtn    = document.getElementById('reset-btn');
+const themeBtn    = document.getElementById('theme-btn');
+
+// ── PERSISTENCE ────────────────────────────────────────────────────────────
+function autoSave() {
+  const dataToSave = files.map(f => ({
+    id: f.id,
+    name: f.name,
+    code: editors[f.id] ? editors[f.id].getValue() : f.code
+  }));
+  localStorage.setItem('hmhs_sandbox_files', JSON.stringify(dataToSave));
+}
+
+// Exit Warning
+window.addEventListener('beforeunload', (e) => {
+  const hasContent = files.some(f => {
+    const code = editors[f.id] ? editors[f.id].getValue() : f.code;
+    return code.trim().length > 0;
+  });
+  if (hasContent) {
+    e.preventDefault();
+    e.returnValue = ''; 
+  }
+});
+
+// Reset Logic
+resetBtn.addEventListener('click', () => {
+  if (confirm("Are you sure? This will delete all your local files and reset the sandbox to defaults.")) {
+    // We remove the listener so the browser doesn't ask "Leave site?" when we reload
+    window.onbeforeunload = null; 
+    localStorage.removeItem('hmhs_sandbox_files');
+    location.reload();
+  }
+});
+
+// ── PYODIDE ───────────────────────────────────────────────────────────────
+(async () => {
+  try {
+    pyodide = await loadPyodide({
+      stdout: (s) => appendOutput(s + '\n', 'out'),
+      stderr: (s) => appendOutput(s + '\n', 'err'),
+    });
+    document.getElementById('status-dot').className = 'ready';
+    document.getElementById('status-text').textContent = 'Python 3.11 ready';
+    runBtn.disabled = false;
+  } catch(e) {
+    document.getElementById('status-dot').className = 'error';
+    document.getElementById('status-text').textContent = 'Runtime error';
+    appendOutput('Failed to load Pyodide: ' + e, 'err');
+  }
+})();
+
+function appendOutput(text, type='out') {
+  const cls = { out:'out-line', err:'err-line', info:'info-line', ok:'ok-line', prompt:'prompt' }[type] || 'out-line';
+  const span = document.createElement('span');
+  span.className = cls;
+  span.textContent = text;
+  outputEl.appendChild(span);
+  outputEl.scrollTop = outputEl.scrollHeight;
+}
+
+async function runCode() {
+  if (!pyodide || runBtn.disabled) return;
+  const file = files.find(f => f.id === activeId);
+  if (!file) return;
+
+  if (editors[activeId]) file.code = editors[activeId].getValue();
+  autoSave();
+  outputEl.innerHTML = '';
+  appendOutput(`▶ Running ${file.name}…\n`, 'prompt');
+  runBtn.disabled = true;
+
+  try {
+    await pyodide.runPythonAsync(file.code);
+    appendOutput('\n✓ Done\n', 'ok');
+  } catch (err) {
+    appendOutput('\n' + err.message + '\n', 'err');
+  } finally {
+    runBtn.disabled = false;
+  }
+}
+
+runBtn.addEventListener('click', runCode);
+document.getElementById('clear-btn').addEventListener('click', () => outputEl.innerHTML = '');
+
+// ── THEME ─────────────────────────────────────────────────────────────────
+let isLight = false;
+themeBtn.addEventListener('click', () => {
+  isLight = !isLight;
+  document.documentElement.classList.toggle('light', isLight);
+  themeBtn.textContent = isLight ? '🌑' : '🌙';
+  const cmTheme = isLight ? 'default' : 'dracula';
+  Object.values(editors).forEach(cm => cm.setOption('theme', cmTheme));
+});
+
+// ── EDITOR & TABS ──────────────────────────────────────────────────────────
+function createEditor(file) {
+  const wrap = document.createElement('div');
+  wrap.className = 'cm-wrap';
+  wrap.style.cssText = 'display:none;overflow:hidden;height:100%;';
+  wrap.dataset.fileId = file.id;
+  editorWrap.appendChild(wrap);
+
+  const cm = CodeMirror(wrap, {
+    value: file.code,
+    mode: 'python',
+    theme: 'dracula',
+    lineNumbers: true,
+    autoCloseBrackets: true,
+    matchBrackets: true,
+    keyMap: 'sublime',
+    indentUnit: 4,
+    tabSize: 4,
+    extraKeys: { 'Ctrl-Enter': runCode, 'Cmd-Enter': runCode }
+  });
+
+  cm.on('change', () => autoSave());
+  editors[file.id] = cm;
+  return wrap;
+}
+
+function renderTabs() {
+  [...tabbar.querySelectorAll('.tab')].forEach(t => t.remove());
+  files.forEach(file => {
+    const tab = document.createElement('div');
+    tab.className = 'tab' + (file.id === activeId ? ' active' : '');
+    tab.innerHTML = `<span class="py-icon">.py</span><span class="tab-name">${file.name}</span>`;
+    
+    if (files.length > 1) {
+      const closeEl = document.createElement('span');
+      closeEl.className = 'close-tab';
+      closeEl.textContent = '×';
+      closeEl.onclick = (e) => { e.stopPropagation(); closeTab(file.id); };
+      tab.appendChild(closeEl);
+    }
+
+    tab.onclick = () => activateTab(file.id);
+    
+    tab.ondblclick = () => {
+      const nameEl = tab.querySelector('.tab-name');
+      const input = document.createElement('input');
+      input.className = 'tab-name-input';
+      input.value = file.name.replace('.py','');
+      nameEl.replaceWith(input);
+      input.focus();
+      input.onblur = () => {
+        file.name = (input.value.trim() || 'script') + '.py';
+        renderTabs();
+        autoSave();
+      };
+    };
+
+    tabbar.insertBefore(tab, addTabBtn);
+  });
+}
+
+function activateTab(id) {
+  if (activeId !== null && editors[activeId]) files.find(f => f.id === activeId).code = editors[activeId].getValue();
+  activeId = id;
+  editorWrap.querySelectorAll('.cm-wrap').forEach(w => w.style.display = (parseInt(w.dataset.fileId) === id) ? 'block' : 'none');
+  if (editors[id]) { editors[id].refresh(); editors[id].focus(); }
+  renderTabs();
+}
+
+function addTab() {
+  const name = prompt("File name:", `script_${nextId}.py`);
+  if (!name) return;
+  const file = { id: nextId++, name: name.endsWith('.py') ? name : name + '.py', code: '# New file\n' };
+  files.push(file);
+  createEditor(file);
+  activateTab(file.id);
+}
+
+function closeTab(id) {
+  const idx = files.findIndex(f => f.id === id);
+  files.splice(idx, 1);
+  editorWrap.querySelector(`[data-file-id="${id}"]`).remove();
+  delete editors[id];
+  activateTab(files[Math.min(idx, files.length - 1)].id);
+}
+
+addTabBtn.onclick = addTab;
+
+// ── DIVIDER DRAG ──────────────────────────────────────────────────────────
+let dragging = false;
+document.getElementById('divider').onmousedown = () => dragging = true;
+window.onmousemove = (e) => {
+  if (!dragging) return;
+  const newW = Math.max(180, window.innerWidth - e.clientX);
+  document.getElementById('output-panel').style.width = newW + 'px';
+};
+window.onmouseup = () => { dragging = false; if (editors[activeId]) editors[activeId].refresh(); };
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+files.forEach(f => createEditor(f));
+if (activeId !== null) activateTab(activeId);
+
+// ── DOWNLOAD & OPEN ───────────────────────────────────────────────────────
+document.getElementById('download-btn').onclick = () => {
+  const file = files.find(f => f.id === activeId);
+  const blob = new Blob([editors[activeId].getValue()], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = file.name;
+  a.click();
+};
+
+document.getElementById('open-btn').onclick = () => document.getElementById('file-input').click();
+document.getElementById('file-input').onchange = (e) => {
+  const file = e.target.files[0];
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const f = { id: nextId++, name: file.name, code: ev.target.result };
+    files.push(f);
+    createEditor(f);
+    activateTab(f.id);
+  };
+  reader.readAsText(file);
+};
+</script>
+</body>
+</html>
