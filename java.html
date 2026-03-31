@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HMHS Java Sandbox</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@800&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0c;
+      --header-bg: #141418;
+      --accent: #f89820; /* Java Orange */
+      --text: #e0e0e6;
+      --border: #2d2d35;
+    }
+
+    body, html {
+      height: 100%;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      overflow: hidden;
+    }
+
+    header {
+      height: 60px;
+      background-color: var(--header-bg);
+      display: flex;
+      align-items: center;
+      padding: 0 25px;
+      border-bottom: 1px solid var(--border);
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: -0.5px;
+    }
+
+    .logo span { color: var(--text); opacity: 0.5; }
+
+    main {
+      height: calc(100vh - 60px);
+      width: 100%;
+    }
+
+    /* The Compiler Engine */
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: var(--bg);
+    }
+
+    .status-pill {
+      font-size: 0.75rem;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: rgba(248, 152, 32, 0.1);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">HMHS<span>/</span>JavaSandbox</div>
+    <div class="status-pill">v2.0 • Active Build</div>
+  </header>
+
+  <main>
+    <iframe 
+      src="https://onecompiler.com/embed/java?theme=dark&hideLanguageSelection=true&code=public%20class%20Main%20%7B%0A%20%20%20%20public%20static%20void%20main(String%5B%5D%20args)%20%7B%0A%20%20%20%20%20%20%20%20System.out.println(%22Hello%20Java!%22)%3B%0A%20%20%20%20%7D%0A%7D" 
+      allow="clipboard-read; clipboard-write"
+      title="Java Compiler">
+    </iframe>
+  </main>
+
+</body>
+</html>
